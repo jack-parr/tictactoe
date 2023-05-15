@@ -1,5 +1,6 @@
 import random, time, math 
 import pygame as pyg
+import pyautogui
 
 # COLOURS
 white = (255, 255, 255)
@@ -170,30 +171,28 @@ def ai_turn(board_state):
     '''
 
     scores = [0, 0, 0, 0, 0, 0, 0, 0, 0]  # initialising scores and zone.
-    current_zone = 0
 
-    for zone_score in scores:
+    for zone in range(9):
         # cycles through each zone.
-        board_state_edit = board_state  # copies the board for editing.
-        
-        if board_state_edit[current_zone] != 0:
+        zone_score = 0
+
+        if board_state[zone] != 0:
             zone_score = -9999  # discards this zone.
 
         else:
-            board_state_edit[current_zone] = 1
-            checking = check_win(board_state_edit)  # checks if the human player can win here on the next move.
+            board_state[zone] = 1
+            checking = check_win(board_state)  # checks if the human player can win here on the next move.
             if checking[0] == True:
                 zone_score = 500
 
-            board_state_edit[current_zone] = 2
-            checking = check_win(board_state_edit)  # checks if the AI can win here now.
+            board_state[zone] = 2
+            checking = check_win(board_state)  # checks if the AI can win here now.
             if checking[0] == True:
                 zone_score = 1000
             
-            board_state_edit[current_zone] = 0
+            board_state[zone] = 0
 
-        scores[current_zone] = zone_score  # places zone_score into the scores list.
-        current_zone += 1
+        scores[zone] = zone_score  # places zone_score into the scores list.
 
     max_score_index = scores.index(max(scores))  # finds zone of greatest score and assigns this to choice,
     choice = max_score_index
@@ -201,25 +200,28 @@ def ai_turn(board_state):
     valid_choice = False
     while valid_choice == False:
 
-        if scores[choice] == 0:  # if the AI can't win or block a win, it chooses randomly.
+        if scores[choice] == 0 or scores[choice] == -9999:  # if the AI can't win or block a win, it chooses randomly.
             choice = random.randint(0, 8)
-            if scores[choice] != -9999:  # checks if random choice is already taken.
+            if board_state[choice] == 0:  # checks if random choice is already taken.
                 valid_choice = True
-
+        
         else:
-            valid_choice = True  # defaults to this if the AI can win or block a win.
+            valid_choice = True  # defaults to this if AI can win or block a win.
 
     return choice
 
 
 # RUNNING THE GAME
-def main():
+def main(first_game):
     '''
     This function contains the game running sequences. The human player begins.
     '''
 
     make_window()  # initialise window.
     board_state = [0, 0, 0, 0, 0, 0, 0, 0, 0]  # initialise board state.
+
+    if first_game == True:
+        pyautogui.alert("Welcome to a game of TicTacToe! You are Naughts, click a square to make your first move. Good luck!")
 
     running = True
     player_turn = 1
@@ -254,7 +256,7 @@ def main():
             pyg.display.update()
 
             time.sleep(random.randint(1, 20) / 10)  # adds a random delay to make it seem like it's thinking.
-        
+    
             ai_choice = ai_turn(board_state)  # makes a choice based on the board state.
             draw_shape(player_turn, ai_choice)  # draws choice onto board.
             board_state[ai_choice] = 2  # updates board state.
@@ -274,7 +276,7 @@ def main():
             if event.type == pyg.KEYDOWN:  # keyboard is pressed.
                 if event.key == pyg.K_r:  # 'r' key is pressed.
                     running = False
-                    main()  # resets and reruns game.
+                    main(first_game=False)  # resets and reruns game.
 
 
             if event.type == pyg.MOUSEBUTTONDOWN and player_turn == 1 and stale != 9 and win_check == False:  # mouse is clicked during players turn.
@@ -288,4 +290,4 @@ def main():
                     player_turn = 2  # ends player turn.
 
 
-main()
+main(first_game=True)
